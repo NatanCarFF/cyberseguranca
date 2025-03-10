@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proteja o PC 🛡️</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #0d0d0d;
+            color: #00FF00;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        h1 {
+            color: #00FF00;
+            text-shadow: 0 0 10px #00FF00;
+            font-size: 50px;
+        }
+        .game-container {
+            position: relative;
+            width: 100vw;
+            height: 300px;
+            border-bottom: 2px solid #00FF00;
+            background: url('https://www.transparenttextures.com/patterns/grid.png'), linear-gradient(to bottom, #2a2a2a, #4f4f4f);
+            overflow: hidden;
+            display: none;
+        }
+        .computer {
+            font-size: 50px;
+            position: absolute;
+            bottom: 10px;
+            left: 50px;
+        }
+        .hacker {
+            font-size: 50px;
+            position: absolute;
+            bottom: 10px;
+            left: 100vw;
+            transition: left 0.1s linear;
+        }
+        .word-box {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #00FF00;
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 2px solid #00FF00;
+        }
+        .input-box {
+            margin-top: 20px;
+            display: none;
+        }
+        input {
+            font-size: 18px;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #2a2a2a;
+            color: #00FF00;
+            border: 2px solid #00FF00;
+        }
+        button {
+            font-size: 18px;
+            padding: 10px 20px;
+            background: #00FF00;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #009900;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ffeb3b;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            display: none;
+            font-size: 18px;
+        }
+        .score-board {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 20px;
+            color: #00FF00;
+        }
+        .timer {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 20px;
+            color: #00FF00;
+        }
+        .start-screen, .end-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 10px;
+            color: white;
+            display: block;
+        }
+        .start-screen button, .end-screen button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #00FF00;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .start-screen button:hover, .end-screen button:hover {
+            background-color: #009900;
+        }
+
+        /* Ajustes para celular */
+        @media (max-width: 600px) {
+            body {
+                font-family: 'Courier New', monospace;
+            }
+            .word-box {
+                font-size: 18px;
+            }
+            .computer {
+                font-size: 40px;
+            }
+            .hacker {
+                font-size: 40px;
+            }
+            .score-board, .timer {
+                font-size: 18px;
+            }
+            .input-box input {
+                font-size: 16px;
+            }
+            .input-box button {
+                font-size: 16px;
+            }
+            .start-screen button, .end-screen button {
+                font-size: 16px;
+                padding: 10px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Proteja o PC 🛡️</h1>
+    <div class="start-screen" id="start-screen">
+        <h2>Bem-vindo ao Jogo Proteja o PC!</h2>
+        <p>Desafie-se a proteger o seu computador enquanto enfrenta hackers!</p>
+        <button onclick="startGame()">Iniciar Jogo</button>
+    </div>
+    <div class="end-screen" id="end-screen" style="display: none;">
+        <h2>Game Over!</h2>
+        <p>Você perdeu! Sua pontuação foi: <span id="final-score"></span></p>
+        <button onclick="restartGame()">Reiniciar Jogo</button>
+    </div>
+    <div class="game-container" id="game-container">
+        <div class="word-box" id="word-box">Traduza: </div>
+        <div class="computer" id="computer">💻</div>
+        <div class="hacker" id="hacker">👨‍💻</div>
+    </div>
+    <div class="input-box" id="input-box">
+        <input type="text" id="answer" placeholder="Digite a tradução...">
+        <button onclick="checkAnswer()">Enviar</button>
+    </div>
+    <div class="notification" id="notification"></div>
+    <div class="score-board" id="score-board">Pontuação: 0</div>
+    <div class="timer" id="timer">Tempo: 30</div>
+
+    <script>
+const words = [
+    { english: "Firewall", portuguese: "Parede de Fogo" },
+    { english: "Malware", portuguese: "Software Malicioso" },
+    { english: "Encryption", portuguese: "Criptografia" },
+    { english: "Trojan", portuguese: "Cavalo de Troia" },
+    { english: "Phishing", portuguese: "Fraude Eletrônica" },
+    { english: "Spyware", portuguese: "Software Espião" },
+    { english: "Ransomware", portuguese: "Software de Sequestro" },
+    { english: "Hack", portuguese: "Invasão" },
+    { english: "Botnet", portuguese: "Rede de Bots" },
+    { english: "Keylogger", portuguese: "Gravador de Teclas" },
+    { english: "Pharming", portuguese: "Redirecionamento Fraudulento" },
+    { english: "Backdoor", portuguese: "Porta dos Fundos" },
+    { english: "Rootkit", portuguese: "Kit de Raiz" },
+    { english: "Brute Force", portuguese: "Força Bruta" },
+    { english: "Bot", portuguese: "Robô" },
+    { english: "Cryptojacking", portuguese: "Roubo de Criptomoeda" },
+    { english: "Hacker", portuguese: "Invasor" },
+    { english: "Exploit", portuguese: "Exploração" },
+    { english: "Scareware", portuguese: "Software de Medo" },
+    { english: "Social Engineering", portuguese: "Engenharia Social" },
+    { english: "Worm", portuguese: "Vírus Autossuficiente" },
+    { english: "Phishing Kit", portuguese: "Kit de Phishing" },
+    { english: "Denial of Service", portuguese: "Negação de Serviço" },
+    { english: "Packet Sniffing", portuguese: "Captura de Pacote" },
+    { english: "SQL Injection", portuguese: "Injeção de SQL" },
+    { english: "Man-in-the-middle", portuguese: "Homem no Meio" },
+    { english: "Penetration Testing", portuguese: "Teste de Penetração" },
+    { english: "Spoofing", portuguese: "Falsificação" },
+    { english: "Cyberattack", portuguese: "Ataque Cibernético" },
+    { english: "Cloud Security", portuguese: "Segurança na Nuvem" },
+    { english: "Authentication", portuguese: "Autenticação" },
+    { english: "Authorization", portuguese: "Autorização" },
+    { english: "Botnet", portuguese: "Rede de Bots" },
+    { english: "Session Hijacking", portuguese: "Sequestro de Sessão" },
+    { english: "DNS Spoofing", portuguese: "Falsificação de DNS" },
+    { english: "Adware", portuguese: "Publicidade Indesejada" },
+    { english: "Man-in-the-browser", portuguese: "Homem no Navegador" },
+    { english: "Drive-by Download", portuguese: "Download Automático" },
+    { english: "Credential Stuffing", portuguese: "Injeção de Credenciais" },
+    { english: "Key Exchange", portuguese: "Troca de Chaves" },
+    { english: "Session Fixation", portuguese: "Fixação de Sessão" },
+    { english: "Clickjacking", portuguese: "Sequestro de Cliques" },
+    { english: "Cross-site Scripting", portuguese: "Script Entre Sites" },
+    { english: "Cross-site Request Forgery", portuguese: "Falsificação de Requisição Entre Sites" },
+    { english: "Steganography", portuguese: "Esteganografia" },
+    { english: "Privileged Account", portuguese: "Conta Privilegiada" },
+    { english: "Two-factor Authentication", portuguese: "Autenticação de Dois Fatores" },
+    { english: "Public Key Infrastructure", portuguese: "Infraestrutura de Chave Pública" },
+    { english: "Private Key", portuguese: "Chave Privada" },
+    { english: "Network Sniffing", portuguese: "Monitoramento de Rede" },
+    { english: "Data Loss Prevention", portuguese: "Prevenção de Perda de Dados" },
+    { english: "Distributed Denial of Service", portuguese: "Negação de Serviço Distribuída" },
+    { english: "RAT (Remote Access Trojan)", portuguese: "Cavalo de Troia de Acesso Remoto" },
+    { english: "Incident Response", portuguese: "Resposta a Incidentes" },
+    { english: "Data Encryption Standard", portuguese: "Padrão de Criptografia de Dados" },
+    { english: "Secure Sockets Layer", portuguese: "Camada de Soquetes Segura" },
+    { english: "Transport Layer Security", portuguese: "Segurança na Camada de Transporte" },
+    { english: "Public Key Cryptography", portuguese: "Criptografia de Chave Pública" },
+    { english: "Private Key Cryptography", portuguese: "Criptografia de Chave Privada" },
+    { english: "Zero-Day Attack", portuguese: "Ataque de Falha Desconhecida" },
+    { english: "Social Engineering Attack", portuguese: "Ataque de Engenharia Social" },
+    { english: "Data Exfiltration", portuguese: "Exfiltração de Dados" },
+    { english: "Secure File Transfer Protocol", portuguese: "Protocolo Seguro de Transferência de Arquivos" },
+    { english: "Access Control List", portuguese: "Lista de Controle de Acesso" },
+    { english: "Port Scanning", portuguese: "Escaneamento de Portas" },
+    { english: "Intrusion Prevention System", portuguese: "Sistema de Prevenção de Intrusões" },
+    { english: "Intrusion Detection System", portuguese: "Sistema de Detecção de Intrusões" },
+    { english: "Threat Hunting", portuguese: "Caça a Ameaças" },
+    { english: "Security Information and Event Management", portuguese: "Gestão de Informações e Eventos de Segurança" },
+    { english: "Security Operations Center", portuguese: "Centro de Operações de Segurança" },
+    { english: "Malicious Insider", portuguese: "Insider Malicioso" },
+    { english: "Digital Forensics", portuguese: "Forense Digital" },
+    { english: "Security Audit", portuguese: "Auditoria de Segurança" },
+    { english: "Cryptanalysis", portuguese: "Criptoanálise" },
+    { english: "Session Replay Attack", portuguese: "Ataque de Reprodução de Sessão" },
+    { english: "Threat Intelligence", portuguese: "Inteligência de Ameaças" },
+    { english: "Risk Assessment", portuguese: "Avaliação de Riscos" },
+    { english: "Security Patch", portuguese: "Correção de Segurança" },
+    { english: "Security Vulnerability", portuguese: "Vulnerabilidade de Segurança" },
+    { english: "Data Integrity", portuguese: "Integridade dos Dados" },
+    { english: "Firewall Rules", portuguese: "Regras de Firewall" },
+    { english: "Network Segmentation", portuguese: "Segmentação de Rede" },
+    { english: "Data Masking", portuguese: "Máscara de Dados" },
+    { english: "Network Isolation", portuguese: "Isolamento de Rede" },
+    { english: "Data Obfuscation", portuguese: "Obfuscação de Dados" },
+    { english: "Password Cracking", portuguese: "Quebra de Senha" },
+    { english: "Brute Force Attack", portuguese: "Ataque de Força Bruta" },
+    { english: "Fuzz Testing", portuguese: "Teste de Fuzz" },
+    { english: "Denial of Service Attack", portuguese: "Ataque de Negação de Serviço" },
+    { english: "Cloud Computing Security", portuguese: "Segurança em Computação na Nuvem" },
+    { english: "BYOD (Bring Your Own Device)", portuguese: "Traga Seu Próprio Dispositivo" },
+    { english: "Tokenization", portuguese: "Tokenização" },
+    { english: "Data Masking", portuguese: "Mascaramento de Dados" },
+    { english: "Data Retention", portuguese: "Retenção de Dados" },
+    { english: "Incident Management", portuguese: "Gestão de Incidentes" },
+    { english: "Audit Trail", portuguese: "Rastro de Auditoria" },
+    { english: "IP Spoofing", portuguese: "Falsificação de IP" },
+    { english: "DNS Spoofing", portuguese: "Falsificação de DNS" },
+    { english: "SSL Stripping", portuguese: "Remoção de SSL" },
+    { english: "Security Breach", portuguese: "Violação de Segurança" },
+    { english: "Threat Modeling", portuguese: "Modelagem de Ameaças" },
+    { english: "Privilege Escalation", portuguese: "Escalada de Privilégios" },
+    { english: "Privilege Management", portuguese: "Gestão de Privilégios" },
+    { english: "Mobile Device Management", portuguese: "Gestão de Dispositivos Móveis" },
+    { english: "Data Loss Prevention", portuguese: "Prevenção de Perda de Dados" }
+];
+
+
+        let currentWord = {};
+        let score = 0;
+        let obstacleInterval;
+        let obstacleSpeed;
+        let timer = 30;
+        let timerInterval;
+        let gameDuration = 30;
+
+        let gameStarted = false;
+
+        function startGame() {
+            document.getElementById("start-screen").style.display = "none";
+            document.getElementById("game-container").style.display = "block";
+            document.getElementById("score-board").style.display = "block";
+            document.getElementById("timer").style.display = "block";
+            document.getElementById("input-box").style.display = "block";
+            score = 0;
+            document.getElementById("score-board").innerText = `Pontuação: ${score}`;
+            gameStarted = true;
+            startNewRound();
+        }
+
+        function startNewRound() {
+            clearInterval(obstacleInterval);
+            clearInterval(timerInterval);
+            currentWord = words[Math.floor(Math.random() * words.length)];
+            document.getElementById("word-box").innerText = "Traduza: " + currentWord.english;
+            document.getElementById("answer").value = "";
+            moveObstacle();
+            startTimer();
+            speakWord(currentWord.english);
+        }
+
+        function setObstacleSpeed() {
+            const screenWidth = window.innerWidth;
+            const timeToReach = 30; // 30 segundos
+            obstacleSpeed = screenWidth / timeToReach / 1000; // Divide pela quantidade de segundos
+        }
+
+        function moveObstacle() {
+            setObstacleSpeed(); // Define a velocidade do hacker conforme o tamanho da tela
+            let hacker = document.getElementById("hacker");
+            let position = window.innerWidth;
+            hacker.style.left = position + "px";
+            obstacleInterval = setInterval(() => {
+                position -= obstacleSpeed * 10; // Ajuste de velocidade por intervalo
+                hacker.style.left = position + "px";
+                if (position <= 100) {
+                    clearInterval(obstacleInterval);
+                    gameOver();
+                }
+            }, 10);
+        }
+
+        // Ajusta a velocidade sempre que a janela for redimensionada
+        window.addEventListener('resize', setObstacleSpeed);
+
+        function startTimer() {
+            timer = gameDuration;
+            document.getElementById("timer").innerText = `Tempo: ${timer}`;
+            timerInterval = setInterval(() => {
+                if (timer > 0) {
+                    timer--;
+                    document.getElementById("timer").innerText = `Tempo: ${timer}`;
+                } else {
+                    clearInterval(timerInterval);
+                    gameOver();
+                }
+            }, 1000);
+        }
+
+        function checkAnswer() {
+            let userAnswer = document.getElementById("answer").value.trim();
+            const normalizedAnswer = userAnswer.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const normalizedCorrectAnswer = currentWord.portuguese.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+            if (normalizedAnswer.toLowerCase() === normalizedCorrectAnswer.toLowerCase()) {
+                score++;
+                document.getElementById("score-board").innerText = `Pontuação: ${score}`;
+                showNotification("✅ Correto! O PC foi protegido!", "#4CAF50");
+                startNewRound();
+            } else {
+                showNotification("❌ Errado! Tente novamente!", "#f44336");
+            }
+        }
+
+        function gameOver() {
+            showNotification("💀 O Hacker invadiu o PC! Jogo encerrado.", "#f44336");
+            document.getElementById("final-score").innerText = score;
+            document.getElementById("end-screen").style.display = "block";
+            document.getElementById("game-container").style.display = "none";
+            document.getElementById("score-board").style.display = "none";
+            document.getElementById("timer").style.display = "none";
+            document.getElementById("input-box").style.display = "none";
+            gameStarted = false;
+        }
+
+        function restartGame() {
+            document.getElementById("end-screen").style.display = "none";
+            startGame();
+        }
+
+        function showNotification(message, color) {
+            let notification = document.getElementById("notification");
+            notification.innerText = message;
+            notification.style.background = color;
+            notification.style.display = "block";
+            setTimeout(() => {
+                notification.style.display = "none";
+            }, 2000);
+        }
+
+        function speakWord(word) {
+            const utterance = new SpeechSynthesisUtterance(word);
+            const voices = speechSynthesis.getVoices();
+            const femaleVoice = voices.find(voice => voice.name.toLowerCase().includes("female"));
+            if (femaleVoice) {
+                utterance.voice = femaleVoice;
+            }
+            speechSynthesis.speak(utterance);
+        }
+
+        document.getElementById("answer").addEventListener("keyup", function(event) {
+            if (event.key === "Enter") {
+                checkAnswer();
+            }
+        });
+    </script>
+</body>
+</html>
